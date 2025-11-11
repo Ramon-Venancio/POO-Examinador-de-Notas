@@ -1,15 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.faculdade.examinador.de.notas;
 
 import java.util.Scanner;
 
-/**
- *
- * @author vinan
- */
 public class ExaminadorDeNotas {
     public static final Scanner scanner = new Scanner(System.in);
     
