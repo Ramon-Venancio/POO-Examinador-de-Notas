@@ -3,16 +3,22 @@ package com.faculdade.examinador.de.notas;
 
 public class Aluno {
     
-       private String nome;
-       private int pontos;
-       
-       public Aluno(String nome, int pontos){
-           this.nome = nome;
-           this.pontos = pontos;
-       }
+    private String nome;
+    private String respostas;
+    private int pontos;
+
+    public Aluno(String nome, String respostas, int pontos){
+        this.nome = nome;
+        this.respostas = respostas;
+        this.pontos = pontos;
+    }
        
        public String getNome(){
            return nome;
+       }
+       
+       public String getRespostas(){
+        return respostas;
        }
        
        public int getPontos(){
@@ -21,6 +27,6 @@ public class Aluno {
        
        @Override
        public String toString(){
-           return nome + " = " + pontos;
+        return nome + " | " + respostas + " | NOTA: " + pontos;
        }
 }
