@@ -1,9 +1,6 @@
 package com.faculdade.examinador.de.notas;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -31,8 +28,10 @@ public class ResultadoDisciplina {
         return acertos;
     }
     
-    public static void gerarResultado(String arquivoAlunos, String arquivoGabarito){
-        try{
+    public static void gerarResultado(File arquivoAlunos, File arquivoGabarito, String disciplina){
+        try (BufferedReader brGabarito = new BufferedReader(new FileReader(arquivoGabarito));
+             BufferedReader brAlunos = new BufferedReader(new FileReader(arquivoAlunos));)
+        {
 
             /*
              * 1. LER GABARITO
@@ -40,10 +39,9 @@ public class ResultadoDisciplina {
              * Lê apenas a primeira linha do arquivo de gabarito com as respostas
              */
             
-            BufferedReader brGabarito = new BufferedReader(new FileReader(arquivoGabarito));
+            
             String gabarito = brGabarito.readLine().trim();
-            brGabarito.close();
-
+            
             System.out.println("\nGABARITO: " + gabarito + "\n");
 
             /*
@@ -54,31 +52,32 @@ public class ResultadoDisciplina {
              *   - restante da linha → nome do aluno
              */
             
-            BufferedReader brAlunos = new BufferedReader(new FileReader(arquivoAlunos));
+            
             List<Aluno> alunos = new ArrayList<>();
 
-            String linha = brAlunos.readLine();
+            String linha;
 
             // Loop até acabar o arquivo
-            while (linha != null) {
+            while ((linha = brAlunos.readLine()) != null) {
 
                 if (linha.trim().isEmpty()) {
-                    linha = brAlunos.readLine();
                     continue; // ignora linhas em branco
                 }
 
-                String respostas = linha.substring(0, 10).trim();  // respostas do aluno
-                String nome = linha.substring(10).trim();          // nome do aluno
+                String[] partes = linha.split("\t"); 
+                String respostas = "";
+                String nome = "";
+                
+                if (partes.length == 2) {
+                    respostas = partes[0];
+                    nome = partes[1];
+                }
 
                 int pontos = compararRespostas(gabarito, respostas);
 
                 // Criamos um objeto Aluno contendo: nome | respostas | nota
                 alunos.add(new Aluno(nome, respostas, pontos));
-
-                linha = brAlunos.readLine();
             }
-
-            brAlunos.close();
 
             /*
              * 3. CALCULAR MÉDIA DO DESEMPENHO
@@ -112,9 +111,20 @@ public class ResultadoDisciplina {
              *   LISTA DE ALUNOS (nome + respostas + nota)
              *   MÉDIA FINAL
              */
+            File diretorioResultados = new File("Resultados");
             
-            gravar("resultado_alfabetico.txt", listaAlfabetica, gabarito, media);
-            gravar("resultado_por_nota.txt", listaPorNota, gabarito, media);
+            if (!diretorioResultados.exists()) {
+                diretorioResultados.mkdirs();
+            }
+            
+            File diretorioDisciplina  = new File(diretorioResultados, disciplina);
+            
+            if (!diretorioDisciplina.exists()) {
+                diretorioDisciplina.mkdirs();
+            }
+            
+            gravar(diretorioDisciplina, "resultado_alfabetico.txt", listaAlfabetica, gabarito, media);
+            gravar(diretorioDisciplina, "resultado_por_nota.txt", listaPorNota, gabarito, media);
 
             /*
              * 6. MOSTRAR RESULTADOS NO TERMINAL
@@ -152,18 +162,19 @@ public class ResultadoDisciplina {
      *   - média final
      */
     
-    private static void gravar(String nomeArquivo, List<Aluno> alunos, String gabarito, double media) throws Exception {
-
-        PrintWriter pw = new PrintWriter(new FileWriter(nomeArquivo));
-
-        pw.println("GABARITO: " + gabarito + "\n");
-
-        for (Aluno aluno : alunos) {
-            pw.println(aluno);
-        }
-
-        pw.printf("\nMÉDIA DA TURMA: %.2f", media);
-
-        pw.close();
+    private static void gravar(File diretorio, String nomeArquivo, List<Aluno> alunos, String gabarito, double media) throws Exception {
+        File arquivo = new File(diretorio, nomeArquivo);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(arquivo));) {
+            pw.println("GABARITO: " + gabarito + "\n");
+            
+            for (Aluno aluno : alunos) {
+                pw.println(aluno);
+            }
+            if (nomeArquivo.equals("resultado_por_nota.txt")) {
+                pw.printf("\nMÉDIA DA TURMA: %.2f", media);
+            }
+        } catch (IOException e) {
+                System.err.println("Erro ao salvar o arquivo: " + e.getMessage());
+        }        
     }
 }
